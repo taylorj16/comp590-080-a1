@@ -56,8 +56,9 @@ public class HuffEncode {
 			String strLength = encoder.getCode(i);
 
 			// convert to 8-bit byte
-			byte[] bytes = strLength.getBytes();
-			fos.write(bytes);
+			// byte[] bytes = strLength.getBytes();
+			// fos.write(bytes);
+			encoder.encode(i, bit_sink);
 		}
 
 		// Write out total number of symbols as 32 bit value.
