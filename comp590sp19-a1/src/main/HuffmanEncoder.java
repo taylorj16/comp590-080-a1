@@ -12,26 +12,13 @@ import io.OutputStreamBitSink;
 public class HuffmanEncoder {
 
 	private Map<Integer, String> _code_map;
+	private int dataCount = 0;
 
 	public HuffmanEncoder(int[] symbols, int[] symbol_counts) {
 		assert symbols.length == symbol_counts.length;
 
 		// Given symbols and their associated counts, create initial
-		// Huffman tree. Replacing codelengths in symbolwithcodelength for now
-		// to keep nodes together, will create new leaf nodes later with correct lengths
-		List<SymbolWithCodeLength> initial_list = new ArrayList<SymbolWithCodeLength>();
-
-		for (int i = 0; i < 256; i++) {
-			SymbolWithCodeLength leaf = new SymbolWithCodeLength(symbols[i], symbol_counts[i]);
-			initial_list.add(leaf);
-		}
-
-		Collections.sort(initial_list);
-
-		for (SymbolWithCodeLength s : initial_list) {
-
-			System.out.println("Value is " + s.value() + " Length is " + s.codeLength());
-		}
+		// Huffman tree.
 
 		// now create Huffman tree
 
@@ -50,6 +37,8 @@ public class HuffmanEncoder {
 		for (int i = 0; i < 256; i++) {
 			LeafHuffmanNode leaf = new LeafHuffmanNode(new SymbolWithCodeLength(symbols[i], symbol_counts[i]));
 			node_list.add(leaf);
+			dataCount += leaf.count();
+
 		}
 
 		// Create a leaf node for each symbol, encapsulating the
@@ -63,10 +52,14 @@ public class HuffmanEncoder {
 			// Remove the two nodes associated with the smallest counts
 			//// since i sort from smallest to largest, smallest will always be the first
 			// two nodes
+
 			HuffmanNode small_1 = node_list.get(0);
 			HuffmanNode small_2 = node_list.get(1);
+
+			// everything gets moved up when remove from index 0
+			// so remove from 0 twice
 			node_list.remove(0);
-			node_list.remove(1);
+			node_list.remove(0);
 
 			// Create a new internal node with those two nodes as children.
 			InternalHuffmanNode node = new InternalHuffmanNode();
@@ -79,6 +72,7 @@ public class HuffmanEncoder {
 			// Resort
 
 			node_list.sort(null);
+
 		}
 
 		// Create a temporary empty mapping between symbol values and their code strings
@@ -90,35 +84,8 @@ public class HuffmanEncoder {
 
 		HuffmanNode node = node_list.get(0);
 
-		for (int i = 0; i < 256; i++) {
-			String bitMapping = "";
-			while (!node.isLeaf()) {
-
-				if (node.left() instanceof InternalHuffmanNode) {
-					if (((InternalHuffmanNode) node.left()).haveTraversed()) {
-						continue;
-					} else {
-						bitMapping += "0";
-						((InternalHuffmanNode) node).setTraverse();
-					}
-
-				} else if (node.right() instanceof InternalHuffmanNode) {
-					if (((InternalHuffmanNode) node.right()).haveTraversed()) {
-						continue;
-					} else {
-						bitMapping += "1";
-						((InternalHuffmanNode) node).setTraverse();
-					}
-				} else if (node.left() instanceof LeafHuffmanNode) {
-					bitMapping += "0";
-					node = node.left();
-				} else if (node.right() instanceof LeafHuffmanNode) {
-					bitMapping += "1";
-					node = node.right();
-				}
-			}
-			cmap.put(node.symbol(), bitMapping);
-		}
+		encode(node, "", cmap);
+		System.out.println("Cmap created");
 
 		// Create empty list of SymbolWithCodeLength objects
 		List<SymbolWithCodeLength> sym_with_length = new ArrayList<SymbolWithCodeLength>();
@@ -129,11 +96,12 @@ public class HuffmanEncoder {
 		// cmap).
 
 		for (int i = 0; i < 256; i++) {
-			String strlength = this.getCode(i);
+			String strlength = cmap.get(i);
 			int length = strlength.length();
 			SymbolWithCodeLength sym = new SymbolWithCodeLength(i, length);
 			sym_with_length.add(sym);
 		}
+		System.out.println("Cmap encoded");
 
 		// Sort sym_with_lenght
 		Collections.sort(sym_with_length);
@@ -156,13 +124,28 @@ public class HuffmanEncoder {
 
 		// Walk down canonical tree forming code strings as you did before and
 		// insert into map.
+
+		encode(canonical_root, "", _code_map);
+
+	}
+
+	// initial encoding of created huffmanTree
+	public static void encode(HuffmanNode node, String str, Map<Integer, String> InitialHuffCode) {
+		if (node == null) {
+			return;
+		}
+		// found a leaf node
+		if (node.left() == null && node.right() == null) {
+			InitialHuffCode.put(node.symbol(), str);
+		}
+
+		encode(node.left(), str + "0", InitialHuffCode);
+		encode(node.right(), str + "1", InitialHuffCode);
 	}
 
 	public String getCode(int symbol) {
 		return _code_map.get(symbol);
 	}
-
-	// public SymbolWithCodeLength()
 
 	public void encode(int symbol, OutputStreamBitSink bit_sink) throws IOException {
 		bit_sink.write(_code_map.get(symbol));

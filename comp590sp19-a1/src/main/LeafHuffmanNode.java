@@ -19,7 +19,7 @@ public class LeafHuffmanNode implements HuffmanNode {
 		// TODO Auto-generated method stub
 		// count associated with the symbol of the leaf
 		// not used when creating canonical tree
-		return count;
+		return this.count;
 	}
 
 	@Override
@@ -55,13 +55,15 @@ public class LeafHuffmanNode implements HuffmanNode {
 	@Override
 	public HuffmanNode left() {
 		// TODO Auto-generated method stub
-		throw new RuntimeException("Leaf node has no child");
+		return null;
+		// throw new RuntimeException("Leaf node has no child");
 	}
 
 	@Override
 	public HuffmanNode right() {
 		// TODO Auto-generated method stub
-		throw new RuntimeException("Leaf node has no child");
+		return null;
+		// throw new RuntimeException("Leaf node has no child");
 	}
 
 }

@@ -20,7 +20,7 @@ public class InternalHuffmanNode implements HuffmanNode {
 		// TODO Auto-generated method stub
 		// sum of the count associated with its children
 		// not used when creating canonical tree
-		return 0;
+		return count;
 	}
 
 	@Override

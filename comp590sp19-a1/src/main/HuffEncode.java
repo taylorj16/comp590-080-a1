@@ -45,7 +45,7 @@ public class HuffEncode {
 
 		// Create encoder using symbols and their associated counts from file.
 
-		HuffmanEncoder encoder = new HuffmanEncoder(symbols, symbol_counts);// paused here to work in other files
+		HuffmanEncoder encoder = new HuffmanEncoder(symbols, symbol_counts);
 
 		// Open output stream.
 		FileOutputStream fos = new FileOutputStream(output_file_name);
@@ -54,7 +54,7 @@ public class HuffEncode {
 		// Write out code lengths for each symbol as 8 bit value to output file.
 		for (int i = 0; i < 256; i++) {
 			String strLength = encoder.getCode(i);
-			// int length = strLength.length();
+
 			// convert to 8-bit byte
 			byte[] bytes = strLength.getBytes();
 			fos.write(bytes);
@@ -72,7 +72,13 @@ public class HuffEncode {
 		// look up code using encoder.getCode() and write code
 		// out to output file.
 
-		int sym = fis.read();
+		for (int i = 0; i < num_symbols; i++) {
+			char current;
+			int symVal;
+			current = (char) fis.read();
+			symVal = (int) current;
+			encoder.encode(symVal, bit_sink);
+		}
 
 		// Pad output to next word.
 		bit_sink.padToWord();
