@@ -19,7 +19,7 @@ public class LeafHuffmanNode implements HuffmanNode {
 		// TODO Auto-generated method stub
 		// count associated with the symbol of the leaf
 		// not used when creating canonical tree
-		return this.count;
+		return count;
 	}
 
 	@Override

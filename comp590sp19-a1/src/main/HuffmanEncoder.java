@@ -41,6 +41,27 @@ public class HuffmanEncoder {
 
 		}
 
+		// For calculation purposes
+
+		double probs[] = new double[256];
+
+		for (int i = 0; i < 256; i++) {
+			double prob = (double) symbol_counts[i] / dataCount;
+			probs[i] = prob;
+			System.out.println("Symbol " + symbols[i] + " With prob of " + prob);
+		}
+
+		// Shanon's law for theoretical entropy
+		double theoretical = 0;
+
+		for (int i = 0; i < 256; i++) {
+			double prob = (probs[i]) * (Math.log(2) * probs[i]);
+			theoretical += prob;
+
+		}
+		theoretical = -theoretical;
+		System.out.println("Theoretical Entropy is " + theoretical);
+
 		// Create a leaf node for each symbol, encapsulating the
 		// frequency count information into each leaf.
 
@@ -85,7 +106,7 @@ public class HuffmanEncoder {
 		HuffmanNode node = node_list.get(0);
 
 		encode(node, "", cmap);
-		System.out.println("Cmap created");
+		// System.out.println("Cmap created");
 
 		// Create empty list of SymbolWithCodeLength objects
 		List<SymbolWithCodeLength> sym_with_length = new ArrayList<SymbolWithCodeLength>();
@@ -101,7 +122,7 @@ public class HuffmanEncoder {
 			SymbolWithCodeLength sym = new SymbolWithCodeLength(i, length);
 			sym_with_length.add(sym);
 		}
-		System.out.println("Cmap encoded");
+		// System.out.println("Cmap encoded");
 
 		// Sort sym_with_lenght
 		Collections.sort(sym_with_length);

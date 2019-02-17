@@ -26,12 +26,18 @@ public class HuffDecode {
 		// symbol as a
 		// SymbolWithCodeLength object and add to the list symbols_with_length.
 
+		// Array for calculation purposes
+		int codelength[] = new int[256];
+
+		// adding symbolswithlengths to list
 		for (int i = 0; i < 256; i++) {
 
 			int bytes = bit_source.next(8);
 			SymbolWithCodeLength symbols = new SymbolWithCodeLength(i, bytes);
 			symbols_with_length.add(symbols);
-			// System.out.println(symbols_with_length.get(i).toString());
+
+			codelength[i] = bytes;
+
 		}
 
 		// Then sort the symbols.
@@ -59,12 +65,35 @@ public class HuffDecode {
 
 			FileOutputStream fos = new FileOutputStream(output_file_name);
 
+			// for symbol count in calculation
+			int symbolcount[] = new int[256];
+			for (int i = 0; i < 256; i++) {
+				symbolcount[i] = 0;
+			}
+
+			// actual decoding of file
 			for (int i = 0; i < num_symbols; i++) {
 				// Decode next symbol using huff_tree and write out to file.
 				int b = huff_tree.decode(bit_source);
-
+				symbolcount[b]++;
 				fos.write(b);
 			}
+
+			// math for actual entropy
+			double probs[] = new double[256];
+			for (int i = 0; i < 256; i++) {
+				double prob = (double) symbolcount[i] / num_symbols;
+				probs[i] = prob;
+			}
+
+			double actual = 0;
+			for (int i = 0; i < 256; i++) {
+				double entropycalc = probs[i] * (Math.log(2) * codelength[i]);
+				actual += entropycalc;
+
+			}
+
+			System.out.println("Actual Entropy is " + actual);
 
 			// Flush output and close files.
 
