@@ -13,6 +13,7 @@ public class MyContextAdaptiveACEncodeVideoFile {
 	public static void main(String[] args) throws IOException {
 		String input_file_name = "data/out.dat";
 		String output_file_name = "data/mySchemeCompression.dat";
+		FileInputStream fis = new FileInputStream(input_file_name);
 
 		int range_bit_width = 40;
 
@@ -24,27 +25,49 @@ public class MyContextAdaptiveACEncodeVideoFile {
 
 		// to exploit temporal coherence, since pixel values will be similar from one
 		// frame to the next
-		// i will encode the first 4096 bytes (pixels) because there would likely be
+		// i will attempt to encode the first 4096 bytes (pixels) because there would
+		// likely be
 		// little to no change in pixel values, so when decoding, one could repeat the
 		// process of
 		// by decoding the same values any number of times
 		// to encode one frame i will divide the number of symbols by 300 (30*10)
+		// update: could only figure out difference encoding, didn't make it to prior
+		// value encoding. Might be an error somehwhere, given that the new file
+		// generated is only 24 bytes???
 
-		num_symbols /= 300;
+		// num_symbols /= 300;
 
-		Integer[] symbols = new Integer[256];
-		for (int i = 0; i < 256; i++) {
-			symbols[i] = i;
+		Integer[] symbols = new Integer[num_symbols];
+
+		// read in values from pixels
+		for (int i = 0; i < symbols.length; i++) {
+			symbols[i] = fis.read();
+		}
+
+		Integer[] symbolsReplaced = symbols.clone();
+
+		// differential encode representation
+		for (int i = 0; i < symbols.length; i++) {
+
+			if (0 == i) {
+				continue;
+			} else {
+				int difference = symbols[i] - symbols[i - 1];
+				symbolsReplaced[i] = difference;
+			}
+
 		}
 
 		// Create 256 models. Model chosen depends on value of symbol prior to
 		// symbol being encoded.
 
-		FreqCountIntegerSymbolModel[] models = new FreqCountIntegerSymbolModel[256];
+		// Using own freqcount class
+
+		FreqCountIntegerSymbolModel2[] models = new FreqCountIntegerSymbolModel2[256];
 
 		for (int i = 0; i < 256; i++) {
 			// Create new model with default count of 1 for all symbols
-			models[i] = new FreqCountIntegerSymbolModel(symbols);
+			models[i] = new FreqCountIntegerSymbolModel2(symbolsReplaced);
 		}
 
 		ArithmeticEncoder<Integer> encoder = new ArithmeticEncoder<Integer>(range_bit_width);
@@ -56,13 +79,13 @@ public class MyContextAdaptiveACEncodeVideoFile {
 		bit_sink.write(num_symbols, 32);
 
 		// Next byte is the width of the range registers
-		bit_sink.write(range_bit_width, 40);
+		bit_sink.write(range_bit_width, 8);
 
 		// Now encode the input
-		FileInputStream fis = new FileInputStream(input_file_name);
+		// FileInputStream fis = new FileInputStream(input_file_name);
 
 		// Use model 0 as initial model.
-		FreqCountIntegerSymbolModel model = models[0];
+		FreqCountIntegerSymbolModel2 model = models[0];
 
 		for (int i = 0; i < num_symbols; i++) {
 			int next_symbol = fis.read();

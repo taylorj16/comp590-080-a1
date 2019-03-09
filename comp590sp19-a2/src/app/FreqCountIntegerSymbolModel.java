@@ -5,7 +5,6 @@ import ac.SourceModel;
 public class FreqCountIntegerSymbolModel implements SourceModel<Integer> {
 
 	private Integer[] _symbols;
-	private int _primarySymbol;
 	private int[] _counts;
 	private int _total_count;
 
