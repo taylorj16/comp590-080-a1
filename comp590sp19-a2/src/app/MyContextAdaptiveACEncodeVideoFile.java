@@ -14,13 +14,23 @@ public class MyContextAdaptiveACEncodeVideoFile {
 		String input_file_name = "data/out.dat";
 		String output_file_name = "data/mySchemeCompression.dat";
 
-		int range_bit_width = 8;
+		int range_bit_width = 40;
 
 		System.out.println("Encoding text file: " + input_file_name);
 		System.out.println("Output file: " + output_file_name);
 		System.out.println("Range Register Bit Width: " + range_bit_width);
 
 		int num_symbols = (int) new File(input_file_name).length();
+
+		// to exploit temporal coherence, since pixel values will be similar from one
+		// frame to the next
+		// i will encode the first 4096 bytes (pixels) because there would likely be
+		// little to no change in pixel values, so when decoding, one could repeat the
+		// process of
+		// by decoding the same values any number of times
+		// to encode one frame i will divide the number of symbols by 300 (30*10)
+
+		num_symbols /= 300;
 
 		Integer[] symbols = new Integer[256];
 		for (int i = 0; i < 256; i++) {
@@ -46,7 +56,7 @@ public class MyContextAdaptiveACEncodeVideoFile {
 		bit_sink.write(num_symbols, 32);
 
 		// Next byte is the width of the range registers
-		bit_sink.write(range_bit_width, 8);
+		bit_sink.write(range_bit_width, 40);
 
 		// Now encode the input
 		FileInputStream fis = new FileInputStream(input_file_name);
@@ -61,9 +71,10 @@ public class MyContextAdaptiveACEncodeVideoFile {
 			// Update model used
 			model.addToCount(next_symbol);
 
-			// Set up next model based on symbol just encoded
+			// Set up next model based on symbol just encoded(prior- adaptive coding)
 			model = models[next_symbol];
 		}
+
 		fis.close();
 
 		// Finish off by emitting the middle pattern
