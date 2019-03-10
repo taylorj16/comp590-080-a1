@@ -27,35 +27,13 @@ public class MyContextAdaptiveACEncodeVideoFile {
 		// frame to the next
 		// i will attempt to encode the first 4096 bytes (pixels) because there would
 		// likely be
-		// little to no change in pixel values, so when decoding, one could repeat the
-		// process of
-		// by decoding the same values any number of times
-		// to encode one frame i will divide the number of symbols by 300 (30*10)
-		// update: could only figure out difference encoding, didn't make it to prior
-		// value encoding. Might be an error somehwhere, given that the new file
-		// generated is only 24 bytes???
+		// little to no change in pixel values to the next frame
 
-		// num_symbols /= 300;
+		// use the model of the previous pixel in the previous frame as the model.
 
-		Integer[] symbols = new Integer[num_symbols];
-
-		// read in values from pixels
-		for (int i = 0; i < symbols.length; i++) {
-			symbols[i] = fis.read();
-		}
-
-		Integer[] symbolsReplaced = symbols.clone();
-
-		// differential encode representation
-		for (int i = 0; i < symbols.length; i++) {
-
-			if (0 == i) {
-				continue;
-			} else {
-				int difference = symbols[i] - symbols[i - 1];
-				symbolsReplaced[i] = difference;
-			}
-
+		Integer[] symbols = new Integer[256];
+		for (int i = 0; i < 256; i++) {
+			symbols[i] = i;
 		}
 
 		// Create 256 models. Model chosen depends on value of symbol prior to
@@ -67,7 +45,7 @@ public class MyContextAdaptiveACEncodeVideoFile {
 
 		for (int i = 0; i < 256; i++) {
 			// Create new model with default count of 1 for all symbols
-			models[i] = new FreqCountIntegerSymbolModel2(symbolsReplaced);
+			models[i] = new FreqCountIntegerSymbolModel2(symbols);
 		}
 
 		ArithmeticEncoder<Integer> encoder = new ArithmeticEncoder<Integer>(range_bit_width);
@@ -86,16 +64,39 @@ public class MyContextAdaptiveACEncodeVideoFile {
 
 		// Use model 0 as initial model.
 		FreqCountIntegerSymbolModel2 model = models[0];
+		int[] priorSymPix = new int[4096];
 
 		for (int i = 0; i < num_symbols; i++) {
 			int next_symbol = fis.read();
 			encoder.encode(next_symbol, model, bit_sink);
 
-			// Update model used
-			model.addToCount(next_symbol);
+			// for temporal coherance, read in first 4096 bytes and then use those for
+			// initial models, updating
+			// the model to the symbol of previous frame pixel
 
-			// Set up next model based on symbol just encoded(prior- adaptive coding)
-			model = models[next_symbol];
+			if (num_symbols < 4097) {
+
+				// reads in first 4096 bytes to set up temporal coherence
+				priorSymPix[i] = next_symbol;
+
+				// Update model used
+				model.addToCount(next_symbol);
+
+				// update model to be next symbol from previous pixel per usual
+				model = models[next_symbol];
+			} else {
+
+				// update model used
+				model.addToCount(next_symbol);
+
+				// Set up next model based on symbol encoded from previous frame (prior-
+				// adaptive coding to exploit temporal coherance)
+
+				// use symbol from prior sym pix as model then update
+				model = models[priorSymPix[i % 4096]];
+				priorSymPix[i % 4096] = next_symbol;
+
+			}
 		}
 
 		fis.close();
